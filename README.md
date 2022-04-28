@@ -12,29 +12,32 @@ Prometheus metrics exporter for go fasthttp framework
 package main
 
 import (
-    "fmt"
-    "github.com/buaazp/fasthttprouter"
-    "github.com/valyala/fasthttp"
-    "log"
-    fastp "go-fasthttp-prometheus"
+	"fmt"
+	"log"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
+
+	fastp "go-fasthttp-prometheus"
 )
 
 func Index(ctx *fasthttp.RequestCtx) {
-    fmt.Fprint(ctx, "Welcome!\n")
+	fmt.Fprint(ctx, "Welcome!\n")
 }
 
 func main() {
-    router := fasthttprouter.New()
-    APIregist(router)
+	r := router.New()
+	
+	APIRegister(r)
 
-    p := fastp.NewPrometheus("fasthttp")
-    fastpHandler := p.WrapHandler(router)
+	p := fastp.NewPrometheus("fasthttp")
+	fastpHandler := p.WrapHandler(r)
 
-    log.Fatal(fasthttp.ListenAndServe(":8080", fastpHandler))
+	log.Fatal(fasthttp.ListenAndServe(":8080", fastpHandler))
 }
 
-func APIregist(r *fasthttprouter.Router) {
-    r.GET("/", Index)
+func APIRegister(r *router.Router) {
+	r.GET("/", Index)
 }
 ```
 

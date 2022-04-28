@@ -17,8 +17,6 @@ var (
 	requestHandlerPool sync.Pool
 )
 
-type FasthttpHandlerFunc func(*fasthttp.RequestCtx)
-
 type Prometheus struct {
 	reqCnt            *prometheus.CounterVec
 	reqDur            *prometheus.HistogramVec
@@ -29,10 +27,10 @@ type Prometheus struct {
 }
 
 func NewPrometheus(subsystem string) *Prometheus {
-
 	p := &Prometheus{
 		MetricsPath: defaultMetricPath,
 	}
+
 	p.registerMetrics(subsystem)
 
 	return p
@@ -53,15 +51,18 @@ func (p *Prometheus) WrapHandler(r *router.Router) fasthttp.RequestHandler {
 		}
 
 		reqSize := make(chan int)
+
 		frc := acquireRequestFromPool()
 		ctx.Request.CopyTo(frc)
+
 		go computeApproximateRequestSize(frc, reqSize)
 
 		start := time.Now()
+
 		r.Handler(ctx)
 
-		status := strconv.Itoa(ctx.Response.StatusCode())
 		elapsed := float64(time.Since(start)) / float64(time.Second)
+		status := strconv.Itoa(ctx.Response.StatusCode())
 		respSize := float64(len(ctx.Response.Body()))
 
 		p.reqDur.WithLabelValues(status).Observe(elapsed)
